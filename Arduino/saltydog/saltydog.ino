@@ -3,7 +3,10 @@
 #include <Servo.h>
 
 // 0:debug MODE 1:実機 TEST MODE 2:実機 本番 MODE
-#define MODE 0
+#define MODE 2
+
+// 0:シリアルプロット 1:Python 2:teraterm
+#define PY 0
 
 // pin配置
 #if MODE == 0
@@ -71,12 +74,13 @@ void set_pin_mode(void)
 
 void set_serial(void)
 {
-  Serial.begin(115200);
+  Serial.begin(9600);
   while(!Serial);
 }
 
 void send_data(int nama, int lpf)
 {
+  #if PY == 0
   Serial.print(0);
   Serial.print(",");
   Serial.print(1024);
@@ -87,6 +91,14 @@ void send_data(int nama, int lpf)
   Serial.print(",");
   Serial.print(lpf);
   Serial.print("\n");
+
+  #elif PY == 1
+  Serial.print(uint16_t(nama));
+
+  #elif PY == 2
+  Serial.println(uint16_t(nama));
+
+  #endif
 }
 
 void servo_move(int val)

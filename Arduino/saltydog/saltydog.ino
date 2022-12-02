@@ -5,7 +5,7 @@
 // 0:debug MODE 1:実機 TEST MODE 2:実機 本番 MODE
 #define MODE 2
 
-// 0:シリアルプロット 1:Python 2:teraterm
+// 0:シリアルプロット 1:Python 2:teraterm 
 #define PY 0
 
 // pin配置
@@ -27,19 +27,30 @@ const int servo_pin = 11;
 // サーボ設定
 #if MODE == 2
 Servo servo;
-const int servo_1st_ang = 0;
-const int servo_2nd_ang = 90;
+const int servo_1st_ang = 30;
+const int servo_2nd_ang = 0;
 #endif
 
 
 // class
-TimeClass wait_time(1000);
+TimeClass wait_time1(1000);
+TimeClass wait_time2(2000);
 
+#if MODE == 0
 LpfClass lpf1(0.6);
 LpfClass lpf2(0.6);
+#elif MODE == 1 || MODE == 2
+LpfClass lpf1(0.6);
+LpfClass lpf2(0.6);
+#endif
+
 
 // micの閾値
-const int siki_val = 500;
+#if MODE == 0
+const int siki_val = 540;
+#elif MODE == 1 || MODE == 2
+const int siki_val = 450;
+#endif
 
 //func
 void set_pin_mode(void);
@@ -52,6 +63,11 @@ void setup()
 {
   set_pin_mode();
   set_serial();
+
+  #if MODE == 2
+    servo.write(servo_1st_ang);
+    delay(1000);
+  #endif
 }
 
 void loop() 
@@ -75,7 +91,7 @@ void set_pin_mode(void)
 void set_serial(void)
 {
   Serial.begin(9600);
-  while(!Serial);
+  //while(!Serial);
 }
 
 void send_data(int nama, int lpf)
@@ -109,14 +125,16 @@ void servo_move(int val)
   case 0:
     if(val > siki_val)
     {
-      wait_time.time_ms_wait(false);
+      wait_time1.time_ms_wait(false);
       count = 1;
     }
     else
     {
+      /*
       #if MODE == 2
       servo.write(servo_1st_ang);
       #endif
+      */
     }
     break;
   
@@ -124,13 +142,25 @@ void servo_move(int val)
     digitalWrite(led_pin, HIGH);
 
     #if MODE == 2
-    servo.write(servo_2nd_ang);
+    servo.write(servo_1st_ang);
     #endif
 
-    if(!wait_time.time_ms_wait(true))
+    if(!wait_time1.time_ms_wait(true))
     {
       digitalWrite(led_pin, LOW);
+      wait_time2.time_ms_wait(false);
+      count = 2;
+      #if MODE == 2
+      servo.write(servo_2nd_ang);
+      #endif
+    }
+    break;
+
+  case 2:
+    if(!wait_time2.time_ms_wait(true))
+    {
       count = 0;
     }
+    break;
   }
 }

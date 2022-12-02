@@ -27,7 +27,7 @@ const int servo_pin = 11;
 // サーボ設定
 #if MODE == 2
 Servo servo;
-const int servo_1st_ang = 30;
+const int servo_1st_ang = 20;
 const int servo_2nd_ang = 0;
 #endif
 

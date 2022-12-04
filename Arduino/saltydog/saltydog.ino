@@ -27,8 +27,8 @@ const int servo_pin = 11;
 // サーボ設定
 #if MODE == 2
 Servo servo;
-const int servo_1st_ang = 20;
-const int servo_2nd_ang = 0;
+const int servo_1st_ang = 0;
+const int servo_2nd_ang = 20;
 #endif
 
 
@@ -40,8 +40,8 @@ TimeClass wait_time2(2000);
 LpfClass lpf1(0.6);
 LpfClass lpf2(0.6);
 #elif MODE == 1 || MODE == 2
-LpfClass lpf1(0.6);
-LpfClass lpf2(0.6);
+LpfClass lpf1(0.5);
+LpfClass lpf2(0.5);
 #endif
 
 
@@ -49,7 +49,7 @@ LpfClass lpf2(0.6);
 #if MODE == 0
 const int siki_val = 540;
 #elif MODE == 1 || MODE == 2
-const int siki_val = 450;
+const int siki_val = 590;
 #endif
 
 //func
@@ -65,17 +65,22 @@ void setup()
   set_serial();
 
   #if MODE == 2
-    servo.write(servo_1st_ang);
-    delay(1000);
+  servo.write(servo_1st_ang);
+  delay(1000);
   #endif
 }
 
 void loop() 
 {
+  // マイク生値の取得
   int mic_val = analogRead(mic_pin);
+  // 生値にLPF
   int mic_val_lpf = lpf1.LPF(lpf2.LPF(mic_val));
 
+  // シリアルでデータ送る
   send_data(mic_val, mic_val_lpf);
+
+  //サーボ動かす
   servo_move(mic_val_lpf);
 }
 
@@ -128,21 +133,14 @@ void servo_move(int val)
       wait_time1.time_ms_wait(false);
       count = 1;
     }
-    else
-    {
-      /*
-      #if MODE == 2
-      servo.write(servo_1st_ang);
-      #endif
-      */
-    }
     break;
   
   case 1:
     digitalWrite(led_pin, HIGH);
 
     #if MODE == 2
-    servo.write(servo_1st_ang);
+    //隠れる
+    servo.write(servo_2nd_ang);
     #endif
 
     if(!wait_time1.time_ms_wait(true))
@@ -151,7 +149,8 @@ void servo_move(int val)
       wait_time2.time_ms_wait(false);
       count = 2;
       #if MODE == 2
-      servo.write(servo_2nd_ang);
+      // 初期位置に戻す（ノイズ対策のため閾値判定付近ではサーボ動かない）
+      servo.write(servo_1st_ang);
       #endif
     }
     break;
